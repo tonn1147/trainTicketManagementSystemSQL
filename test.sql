@@ -147,7 +147,7 @@ BEGIN
         -- Check admin permission
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
@@ -177,7 +177,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
@@ -207,7 +207,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
@@ -218,7 +218,7 @@ BEGIN
             AND BookingStatus = 'Active'
         )
         BEGIN
-            SELECT 'Error' AS Status, 'Cannot delete user with active bookings' AS Message;
+            SELECT 'Error' AS Status, 'Không thể xóa user đang đặt vé' AS Message;
             RETURN;
         END
         
@@ -279,7 +279,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
@@ -289,7 +289,7 @@ BEGIN
             WHERE DepartureStationID = @StationID OR ArrivalStationID = @StationID
         )
         BEGIN
-            SELECT 'Error' AS Status, 'Cannot delete station used in routes' AS Message;
+            SELECT 'Error' AS Status, 'Không thể xóa các trạm tàu đang được sử dụng' AS Message;
             RETURN;
         END
         
@@ -350,7 +350,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
@@ -380,7 +380,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
@@ -410,7 +410,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
@@ -422,7 +422,7 @@ BEGIN
             AND DepartureTime > GETDATE()
         )
         BEGIN
-            SELECT 'Error' AS Status, 'Cannot delete train with upcoming schedules' AS Message;
+            SELECT 'Error' AS Status, 'Không thể xóa chuyến tàu có lịch trình sắp tới' AS Message;
             RETURN;
         END
         
@@ -487,13 +487,13 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
         IF @DepartureStationID = @ArrivalStationID
         BEGIN
-            SELECT 'Error' AS Status, 'Departure and arrival stations must be different' AS Message;
+            SELECT 'Error' AS Status, 'Ga khởi hành và ga đến phải khác nhau' AS Message;
             RETURN;
         END
         
@@ -522,7 +522,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
@@ -598,7 +598,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
@@ -677,7 +677,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
@@ -1321,7 +1321,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
+            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
             RETURN;
         END
         
@@ -1329,7 +1329,7 @@ BEGIN
         
         IF @DryRun = 1
         BEGIN
-            PRINT '=== DRY RUN MODE - NO DATA WILL BE DELETED ===';
+            PRINT '=== DRY RUN MODE - KHÔNG XÓA DỮ LIỆU ===';
             
             SELECT 'Notifications to delete' AS Item, COUNT(*) AS Count
             FROM Notifications

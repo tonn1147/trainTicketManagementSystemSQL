@@ -294,7 +294,7 @@ CREATE OR ALTER PROCEDURE sp_SignUp
     @FullName NVARCHAR(100),
     @Email NVARCHAR(100),
     @PhoneNumber NVARCHAR(20),
-    @Password NVARCHAR(255),
+    @Password VARCHAR(255),
     @UserType NVARCHAR(20) = 'Customer'
 AS
 BEGIN
@@ -1801,6 +1801,7 @@ DBCC FREEPROCCACHE;
 PRINT '=== User Flow ==='
 SELECT * FROM Users;
 
+EXEC sp_SignUp 'Trần Tôn Anh', 'tonanh@gmail.com', '0123456789', 'tonanh_hash_pass';
 PRINT '=== 1. Login ===';
 DECLARE @LoginAttemptResult BIT;
 SET @LoginAttemptResult = dbo.fn_IsValidLoginAttempt('nguyenvanan@email.com','hash_password_123');
@@ -1811,6 +1812,7 @@ ELSE
     PRINT 'Login successfully!';
 
 PRINT '=== 2. View list of trains ===';
+SELECT * FROM Schedules;
 SELECT * FROM vw_AvailableSchedules;
 
 EXEC sp_SearchTrains 1, 8, '2025-11-25';
@@ -1821,7 +1823,7 @@ EXEC sp_CheckSeatAvailability @ScheduleID = 1, @CoachID = 5;
 PRINT '=== 4. Book Tickets ==='
 EXEC sp_CreateBooking 1, 1, '3,4', 'Tôn, Anh';
 EXEC sp_CreateBooking 2, 1, '12,13', 'Thanh, Hưng';
-EXEC sp_CreateBooking 3, 1, '21,22', 'Long, VIệt';
+EXEC sp_CreateBooking 3, 1, '21,22,25', 'Long, VIệt, Bình';
 
 SELECT * FROM vw_CustomerBookings;
 EXEC sp_GetCustomerBookingHistory @UserID = 1;

@@ -251,33 +251,33 @@ END
 
 -- 2.8 Dữ liệu Lịch trình
 INSERT INTO Schedules (TrainID, RouteID, DepartureTime, ArrivalTime, BasePrice, AvailableSeats) VALUES
-(1, 1, '2025-11-01 19:00', '2025-11-03 03:00', 800000, 350),
+(1, 1, '2025-11-25 19:00', '2025-11-26 03:00', 800000, 350),
 (2, 1, '2025-11-02 06:00', '2025-11-03 14:00', 800000, 350),
 (3, 2, '2025-11-01 22:00', '2025-11-02 11:00', 450000, 280),
 (4, 2, '2025-11-02 08:00', '2025-11-02 21:00', 450000, 280),
-(5, 3, '2025-11-01 14:00', '2025-11-02 01:00', 350000, 220),
-(1, 1, '2025-11-05 19:00', '2025-11-07 03:00', 850000, 350);
+(5, 3, '2025-11-18 14:00', '2025-11-19 01:00', 350000, 220),
+(1, 1, '2025-11-20 19:00', '2025-11-21 03:00', 850000, 350);
 
 -- 2.9 Dữ liệu Đặt vé
-INSERT INTO Bookings (BookingCode, UserID, ScheduleID, TotalAmount, PaymentStatus, BookingStatus) VALUES
-('BK20251001001', 1, 1, 1200000, 'Paid', 'Active'),
-('BK20251001002', 2, 3, 585000, 'Paid', 'Active'),
-('BK20251001003', 5, 5, 350000, 'Pending', 'Active'),
-('BK20251002001', 6, 2, 1600000, 'Paid', 'Active');
+--INSERT INTO Bookings (BookingCode, UserID, ScheduleID, TotalAmount, PaymentStatus, BookingStatus) VALUES
+--('BK20251001001', 1, 1, 1200000, 'Paid', 'Active'),
+--('BK20251001002', 2, 3, 585000, 'Paid', 'Active'),
+--('BK20251001003', 5, 5, 350000, 'Pending', 'Active'),
+--('BK20251002001', 6, 2, 1600000, 'Paid', 'Active');
 
 -- 2.10 Dữ liệu Vé (Tickets)
-INSERT INTO Tickets (BookingID, SeatID, PassengerName, PassengerIDNumber, PassengerPhone, TicketPrice, TicketStatus) VALUES
-(1, 10, N'Nguyễn Văn An', '001234567890', '0901234567', 1200000, 'Valid'),
-(2, 20, N'Trần Thị Bình', '001234567891', '0902234567', 585000, 'Valid'),
-(3, 30, N'Hoàng Văn Em', '001234567892', '0905234567', 350000, 'Valid'),
-(4, 75, N'Đỗ Thị Phương', '001234567893', '0906234567', 800000, 'Valid'),
-(4, 76, N'Nguyễn Thị Lan', '001234567894', '0907234567', 800000, 'Valid');
+--INSERT INTO Tickets (BookingID, SeatID, PassengerName, PassengerIDNumber, PassengerPhone, TicketPrice, TicketStatus) VALUES
+--(1, 10, N'Nguyễn Văn An', '001234567890', '0901234567', 1200000, 'Valid'),
+--(2, 20, N'Trần Thị Bình', '001234567891', '0902234567', 585000, 'Valid'),
+--(3, 30, N'Hoàng Văn Em', '001234567892', '0905234567', 350000, 'Valid'),
+--(4, 75, N'Đỗ Thị Phương', '001234567893', '0906234567', 800000, 'Valid'),
+--(4, 76, N'Nguyễn Thị Lan', '001234567894', '0907234567', 800000, 'Valid');
 
 -- 2.11 Dữ liệu Thanh toán
-INSERT INTO Payments (BookingID, PaymentMethod, TransactionID, Amount, PaymentStatus, ResponseCode) VALUES
-(1, 'Momo', 'MOMO_TXN_001', 1200000, 'Success', '00'),
-(2, 'ZaloPay', 'ZALO_TXN_001', 585000, 'Success', '00'),
-(4, 'Visa', 'VISA_TXN_001', 1600000, 'Success', '00');
+--INSERT INTO Payments (BookingID, PaymentMethod, TransactionID, Amount, PaymentStatus, ResponseCode) VALUES
+--(1, 'Momo', 'MOMO_TXN_001', 1200000, 'Success', '00'),
+--(2, 'ZaloPay', 'ZALO_TXN_001', 585000, 'Success', '00'),
+--(4, 'Visa', 'VISA_TXN_001', 1600000, 'Success', '00');
 
 -- 2.12 Dữ liệu Chính sách hoàn hủy
 INSERT INTO RefundPolicies (HoursBeforeDeparture, RefundPercentage, Description) VALUES
@@ -289,28 +289,28 @@ INSERT INTO RefundPolicies (HoursBeforeDeparture, RefundPercentage, Description)
 
 GO
 
---DECLARE @sql NVARCHAR(MAX) = N'';
-
---SELECT @sql = @sql + 'SELECT * FROM [' + s.name + '].[' + t.name + '];' + CHAR(13)
---FROM sys.tables t
---JOIN sys.schemas s ON t.schema_id = s.schema_id;
-
---PRINT @sql;
---EXEC sp_executesql @sql;
-
---GO
-
 -- 3.1 Thủ tục Thêm người dùng
 CREATE OR ALTER PROCEDURE sp_SignUp
     @FullName NVARCHAR(100),
     @Email NVARCHAR(100),
     @PhoneNumber NVARCHAR(20),
-    @Password NVARCHAR(255),
+    @Password VARCHAR(255),
     @UserType NVARCHAR(20) = 'Customer'
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
+		IF EXISTS (SELECT TOP 1 1 FROM Users WHERE Email = @Email OR PhoneNumber = @PhoneNumber)
+		BEGIN
+			PRINT 'Email or phone number have already existed!';
+			RETURN -1;
+		END
+		IF LEN(@Password) < 8
+		BEGIN
+			PRINT 'Password length must be greater than 0';
+			RETURN -1;
+		END
+
         INSERT INTO Users (FullName, Email, PhoneNumber, PasswordHash, UserType)
         VALUES (@FullName, @Email, @PhoneNumber, HASHBYTES('SHA2_256',@Password), @UserType);
         
@@ -754,6 +754,89 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE sp_GetNotificationsByUser
+    @UserID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        n.NotificationID,
+        n.NotificationType,
+        n.Title,
+        n.Message,
+        n.IsRead,
+        n.SentAt,
+        n.ScheduledFor,
+        b.BookingCode
+    FROM Notifications n
+    LEFT JOIN Bookings b ON n.BookingID = b.BookingID
+    WHERE n.UserID = @UserID
+    ORDER BY n.SentAt DESC;
+END
+GO
+
+CREATE OR ALTER PROCEDURE sp_GetTicketsByUser
+    @UserID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        tk.TicketID,
+        tk.PassengerName,
+        tk.PassengerIDNumber,
+        tk.PassengerPhone,
+        tk.TicketPrice,
+        tk.TicketStatus,
+        b.BookingCode,
+        s.DepartureTime,
+        s.ArrivalTime,
+        st1.StationName AS DepartureStation,
+        st2.StationName AS ArrivalStation,
+        t.TrainName,
+        sc.ClassName AS SeatClass,
+        c.CoachNumber,
+        se.SeatNumber
+    FROM Tickets tk
+    JOIN Bookings b ON tk.BookingID = b.BookingID
+    JOIN Schedules s ON b.ScheduleID = s.ScheduleID
+    JOIN Routes r ON s.RouteID = r.RouteID
+    JOIN Stations st1 ON r.DepartureStationID = st1.StationID
+    JOIN Stations st2 ON r.ArrivalStationID = st2.StationID
+    JOIN Trains t ON s.TrainID = t.TrainID
+    JOIN Seats se ON tk.SeatID = se.SeatID
+    JOIN Coaches c ON se.CoachID = c.CoachID
+    JOIN SeatClasses sc ON c.SeatClassID = sc.SeatClassID
+    WHERE b.UserID = @UserID
+    ORDER BY s.DepartureTime DESC;
+END
+GO
+
+
+CREATE OR ALTER PROCEDURE sp_GetPaymentHistoryByUser
+    @UserID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        p.PaymentID,
+        b.BookingCode,
+        p.PaymentMethod,
+        p.TransactionID,
+        p.Amount,
+        p.PaymentStatus,
+        p.ResponseCode,
+        p.ResponseMessage,
+        p.PaymentDate
+    FROM Payments p
+    JOIN Bookings b ON p.BookingID = b.BookingID
+    WHERE b.UserID = @UserID
+    ORDER BY p.PaymentDate DESC;
+END
+GO
+
 -- =============================================
 -- VIEW 
 -- =============================================
@@ -1032,53 +1115,79 @@ GO
 -- 5.5 Thủ tục xử lý thanh toán
 CREATE OR ALTER PROCEDURE sp_ProcessPayment
     @BookingID INT,
-    @PaymentMethod NVARCHAR(50),
     @TransactionID NVARCHAR(100),
-    @Amount DECIMAL(10,2)
+    @ResponseCode NVARCHAR(10) = '00'
 AS
 BEGIN
     SET NOCOUNT ON;
+	DECLARE @TranStarted INT = 0;
     BEGIN TRY
         BEGIN TRANSACTION;
-        
-        -- Thêm payment
-        INSERT INTO Payments (BookingID, PaymentMethod, TransactionID, Amount, PaymentStatus, ResponseCode)
-        VALUES (@BookingID, @PaymentMethod, @TransactionID, @Amount, 'Success', '00');
-        
-        -- Cập nhật trạng thái booking
-        UPDATE Bookings
-        SET PaymentStatus = 'Paid'
-        WHERE BookingID = @BookingID;
-        
-        -- Cập nhật trạng thái vé
-        UPDATE Tickets
-        SET TicketStatus = 'Valid'
-        FROM Tickets tk
-        JOIN Bookings b ON tk.BookingID = b.BookingID
-        WHERE tk.BookingID = @BookingID;
-        
-        -- Gửi thông báo
-        INSERT INTO Notifications (UserID, BookingID, NotificationType, Title, Message)
-        SELECT UserID, BookingID, 'Payment',
-               N'Thanh toán thành công',
-               N'Bạn đã thanh toán thành công cho mã đặt vé ' + BookingCode
+		SET @TranStarted = 1;
+        DECLARE @CurrentStatus NVARCHAR(20);
+        DECLARE @ExistingPaymentID INT;
+		DECLARE @Amount INT;
+
+        SELECT @CurrentStatus = BookingStatus
         FROM Bookings
         WHERE BookingID = @BookingID;
-        
+
+        IF @CurrentStatus IS NULL
+            THROW 54001, 'Booking không tồn tại.', 1;
+
+        IF @CurrentStatus <> 'Active'
+            THROW 54002, 'Booking không ở trạng thái Active, không thể thanh toán.', 1;
+
+        SELECT TOP 1 @ExistingPaymentID = PaymentID
+        FROM Payments
+        WHERE BookingID = @BookingID
+        ORDER BY PaymentID DESC;
+
+		SELECT TOP 1 @Amount = TotalAmount
+		FROM Bookings
+		WHERE BookingID = @BookingID;
+
+        IF @ExistingPaymentID IS NOT NULL
+        BEGIN
+            UPDATE Payments
+            SET TransactionID = @TransactionID,
+                Amount = @Amount,
+                PaymentStatus = CASE WHEN @ResponseCode = '00' THEN 'Success' ELSE 'Failed' END,
+                ResponseCode = @ResponseCode,
+                ResponseMessage = CASE WHEN @ResponseCode = '00' THEN 'Payment successful' ELSE 'Payment failed' END,
+                PaymentDate = CASE WHEN @ResponseCode = '00' THEN GETDATE() ELSE NULL END
+            WHERE PaymentID = @ExistingPaymentID;
+        END
+		ELSE THROW 54003, 'Không tồn tại payment, kiểm tra lại thông tin booking!', 1;
+
+        IF @ResponseCode = '00'
+        BEGIN
+            UPDATE Bookings
+            SET PaymentStatus = 'Paid'
+            WHERE BookingID = @BookingID;
+
+            UPDATE Tickets
+            SET TicketStatus = 'Valid'
+            WHERE BookingID = @BookingID;
+        END
+
         COMMIT TRANSACTION;
-        SELECT 'Success' AS Status;
+        SELECT 'Success' AS Status, @ExistingPaymentID AS PaymentID;
     END TRY
     BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        
-        -- Log lỗi thanh toán
-        INSERT INTO Payments (BookingID, PaymentMethod, TransactionID, Amount, PaymentStatus, ResponseMessage)
-        VALUES (@BookingID, @PaymentMethod, @TransactionID, @Amount, 'Failed', ERROR_MESSAGE());
-        
-        SELECT ERROR_MESSAGE() AS Status;
+		IF @TranStarted = 1 ROLLBACK TRANSACTION;
+
+        DECLARE @ErrMsg NVARCHAR(4000) = ERROR_MESSAGE();
+
+        -- Ghi log lỗi payment
+        INSERT INTO Payments (BookingID, TransactionID, Amount, PaymentStatus, ResponseCode, ResponseMessage)
+        VALUES (@BookingID, @TransactionID, @Amount, 'Failed', '99', @ErrMsg);
+
+        SELECT @ErrMsg AS Status;
     END CATCH
 END
 GO
+
 
 -- 5.6 Thủ tục gửi nhắc nhở
 CREATE OR ALTER PROCEDURE sp_SendDepartureReminders
@@ -1266,121 +1375,83 @@ BEGIN
 END
 GO
 
--- 7.5 Trigger: Kiểm tra ghế trùng khi đặt vé
-CREATE OR ALTER TRIGGER trg_CheckDuplicateSeat
-ON Tickets
-INSTEAD OF INSERT
-AS
-BEGIN
-    -- Kiểm tra ghế đã được đặt chưa
-    IF EXISTS (
-        SELECT 1
-        FROM inserted i
-        JOIN Bookings b ON i.BookingID = b.BookingID
-        JOIN Tickets tk ON i.SeatID = tk.SeatID
-        JOIN Bookings b2 ON tk.BookingID = b2.BookingID
-        WHERE b.ScheduleID = b2.ScheduleID
-            AND b2.BookingStatus = 'Active'
-            AND tk.TicketStatus = 'Valid'
-    )
-    BEGIN
-        RAISERROR (N'Ghế đã được đặt cho chuyến này', 16, 1);
-        ROLLBACK TRANSACTION;
-    END
-    ELSE
-    BEGIN
-        INSERT INTO Tickets (BookingID, SeatID, PassengerName, PassengerIDNumber, PassengerPhone, TicketPrice, TicketStatus)
-        SELECT BookingID, SeatID, PassengerName, PassengerIDNumber, PassengerPhone, TicketPrice, TicketStatus
-        FROM inserted;
-    END
-END
-GO
+---- 7.5 Trigger: Kiểm tra ghế trùng khi đặt vé
+--CREATE OR ALTER TRIGGER trg_CheckDuplicateSeat
+--ON Tickets
+--INSTEAD OF INSERT
+--AS
+--BEGIN
+--    -- Kiểm tra ghế đã được đặt chưa
+--    IF EXISTS (
+--        SELECT 1
+--        FROM inserted i
+--        JOIN Bookings b ON i.BookingID = b.BookingID
+--        JOIN Tickets tk ON i.SeatID = tk.SeatID
+--        JOIN Bookings b2 ON tk.BookingID = b2.BookingID
+--        WHERE b.ScheduleID = b2.ScheduleID
+--            AND b2.BookingStatus = 'Active'
+--            AND tk.TicketStatus = 'Valid'
+--    )
+--    BEGIN
+--        RAISERROR (N'Ghế đã được đặt cho chuyến này', 16, 1);
+--        ROLLBACK TRANSACTION;
+--    END
+--    ELSE
+--    BEGIN
+--        INSERT INTO Tickets (BookingID, SeatID, PassengerName, PassengerIDNumber, PassengerPhone, TicketPrice, TicketStatus)
+--        SELECT BookingID, SeatID, PassengerName, PassengerIDNumber, PassengerPhone, TicketPrice, TicketStatus
+--        FROM inserted;
+--    END
+--END
+--GO
 
--- 7.6 Trigger: Cập nhật trạng thái vé khi booking bị hủy
-CREATE OR ALTER TRIGGER trg_CancelTicketsOnBookingCancel
-ON Bookings
-AFTER UPDATE
-AS
-BEGIN
-    IF UPDATE(BookingStatus)
-    BEGIN
-        UPDATE Tickets
-        SET TicketStatus = 'Cancelled'
-        FROM Tickets tk
-        INNER JOIN inserted i ON tk.BookingID = i.BookingID
-        WHERE i.BookingStatus = 'Cancelled' AND tk.TicketStatus != 'Cancelled';
-    END
-END
-GO
+---- 7.6 Trigger: Cập nhật trạng thái vé khi booking bị hủy
+--CREATE OR ALTER TRIGGER trg_CancelTicketsOnBookingCancel
+--ON Bookings
+--AFTER UPDATE
+--AS
+--BEGIN
+--    IF UPDATE(BookingStatus)
+--    BEGIN
+--        UPDATE Tickets
+--        SET TicketStatus = 'Cancelled'
+--        FROM Tickets tk
+--        INNER JOIN inserted i ON tk.BookingID = i.BookingID
+--        WHERE i.BookingStatus = 'Cancelled' AND tk.TicketStatus != 'Cancelled';
+--    END
+--END
+--GO
 
--- 7.8 Trigger: Kiểm tra thời gian đặt vé
-CREATE OR ALTER TRIGGER trg_CheckBookingTime
-ON Bookings
-INSTEAD OF INSERT
-AS
-BEGIN
-    -- Không cho đặt vé cho chuyến đã khởi hành hoặc sắp khởi hành trong 2 giờ
-    IF EXISTS (
-        SELECT 1
-        FROM inserted i
-        JOIN Schedules s ON i.ScheduleID = s.ScheduleID
-        WHERE DATEDIFF(HOUR, GETDATE(), s.DepartureTime) < 2
-    )
-    BEGIN
-        RAISERROR (N'Không thể đặt vé cho chuyến tàu khởi hành trong vòng 2 giờ', 16, 1);
-        ROLLBACK TRANSACTION;
-    END
-    ELSE
-    BEGIN
-        INSERT INTO Bookings (BookingCode, UserID, ScheduleID, BookingDate, TotalAmount, PaymentStatus, BookingStatus)
-        SELECT BookingCode, UserID, ScheduleID, BookingDate, TotalAmount, PaymentStatus, BookingStatus
-        FROM inserted;
-    END
-END
-GO
-
--- 7.9 Trigger: Tự động cập nhật AvailableSeats
-CREATE OR ALTER TRIGGER trg_UpdateAvailableSeats
-ON Tickets
-AFTER INSERT, DELETE
-AS
-BEGIN
-    -- Khi thêm vé mới
-    IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted)
-    BEGIN
-        UPDATE Schedules
-        SET AvailableSeats = AvailableSeats - 
-            (SELECT COUNT(*) FROM inserted i 
-             JOIN Bookings b ON i.BookingID = b.BookingID 
-             WHERE b.ScheduleID = Schedules.ScheduleID)
-        WHERE ScheduleID IN (
-            SELECT DISTINCT b.ScheduleID 
-            FROM inserted i 
-            JOIN Bookings b ON i.BookingID = b.BookingID
-        );
-    END
-    
-    -- Khi xóa vé
-    IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS (SELECT * FROM inserted)
-    BEGIN
-        UPDATE Schedules
-        SET AvailableSeats = AvailableSeats + 
-            (SELECT COUNT(*) FROM deleted d 
-             JOIN Bookings b ON d.BookingID = b.BookingID 
-             WHERE b.ScheduleID = Schedules.ScheduleID)
-        WHERE ScheduleID IN (
-            SELECT DISTINCT b.ScheduleID 
-            FROM deleted d 
-            JOIN Bookings b ON d.BookingID = b.BookingID
-        );
-    END
-END
-GO
+---- 7.8 Trigger: Kiểm tra thời gian đặt vé
+--CREATE OR ALTER TRIGGER trg_CheckBookingTime
+--ON Bookings
+--INSTEAD OF INSERT
+--AS
+--BEGIN
+--    -- Không cho đặt vé cho chuyến đã khởi hành hoặc sắp khởi hành trong 2 giờ
+--    IF EXISTS (
+--        SELECT 1
+--        FROM inserted i
+--        JOIN Schedules s ON i.ScheduleID = s.ScheduleID
+--        WHERE DATEDIFF(HOUR, GETDATE(), s.DepartureTime) < 2
+--    )
+--    BEGIN
+--        RAISERROR (N'Không thể đặt vé cho chuyến tàu khởi hành trong vòng 2 giờ', 16, 1);
+--        ROLLBACK TRANSACTION;
+--    END
+--    ELSE
+--    BEGIN
+--        INSERT INTO Bookings (BookingCode, UserID, ScheduleID, BookingDate, TotalAmount, PaymentStatus, BookingStatus)
+--        SELECT BookingCode, UserID, ScheduleID, BookingDate, TotalAmount, PaymentStatus, BookingStatus
+--        FROM inserted;
+--    END
+--END
+--GO
 
 -- 7.10 Trigger: Gửi thông báo khi thanh toán thành công
 CREATE OR ALTER TRIGGER trg_NotifyPaymentSuccess
 ON Payments
-AFTER INSERT
+AFTER UPDATE
 AS
 BEGIN
     IF EXISTS (SELECT * FROM inserted WHERE PaymentStatus = 'Success')
@@ -1396,12 +1467,21 @@ BEGIN
         JOIN Bookings b ON i.BookingID = b.BookingID
         WHERE i.PaymentStatus = 'Success';
     END
+	ELSE
+	BEGIN
+		INSERT INTO Notifications (UserID, BookingID, NotificationType, Title, Message)
+        SELECT 
+            b.UserID,
+            b.BookingID,
+            'Payment',
+            N'Thanh toán thất bại',
+            N'Bạn đã thanh toán thất bại ' + FORMAT(i.Amount, 'N0') + N'đ cho mã đặt vé ' + b.BookingCode
+        FROM inserted i
+        JOIN Bookings b ON i.BookingID = b.BookingID
+        WHERE i.PaymentStatus = 'Failed';
+	END
 END
 GO
-
--- =============================================
--- 9. CÁC STORED PROCEDURE BỔ SUNG
--- =============================================
 
 -- 9.1 Thủ tục xem lịch sử booking của user
 CREATE OR ALTER PROCEDURE sp_GetCustomerBookingHistory
@@ -1636,11 +1716,6 @@ END
 CLOSE coach_cursor;
 DEALLOCATE coach_cursor;
 
--- Thêm thông báo mẫu
-INSERT INTO Notifications (UserID, BookingID, NotificationType, Title, Message, IsRead) VALUES
-(1, 1, 'Reminder', N'Nhắc nhở chuyến đi', N'Chuyến tàu SE1 của bạn sẽ khởi hành vào 19:00 ngày 01/11/2025', 0),
-(2, 2, 'Payment', N'Thanh toán thành công', N'Bạn đã thanh toán thành công 585,000đ', 1);
-
 GO
 
 -- Tính thời gian di chuyển
@@ -1712,8 +1787,21 @@ GO
 -- =============================================
 DBCC FREEPROCCACHE;
 
-PRINT '=== User Flow ==='
+--DECLARE @sql NVARCHAR(MAX) = N'';
 
+--SELECT @sql = @sql + 'SELECT * FROM [' + s.name + '].[' + t.name + '];' + CHAR(13)
+--FROM sys.tables t
+--JOIN sys.schemas s ON t.schema_id = s.schema_id;
+
+--PRINT @sql;
+--EXEC sp_executesql @sql;
+
+--GO
+
+PRINT '=== User Flow ==='
+SELECT * FROM Users;
+
+EXEC sp_SignUp 'Trần Tôn Anh', 'tonanh@gmail.com', '0123456789', 'tonanh_hash_pass';
 PRINT '=== 1. Login ===';
 DECLARE @LoginAttemptResult BIT;
 SET @LoginAttemptResult = dbo.fn_IsValidLoginAttempt('nguyenvanan@email.com','hash_password_123');
@@ -1724,14 +1812,40 @@ ELSE
     PRINT 'Login successfully!';
 
 PRINT '=== 2. View list of trains ===';
-PRINT dbo.fn_GetRouteName(1);
-SELECT * FROM dbo.vw_AvailableSchedules;
+SELECT * FROM Schedules;
+SELECT * FROM vw_AvailableSchedules;
+
+EXEC sp_SearchTrains 1, 8, '2025-11-25';
 
 PRINT '=== 3. View seat availability ===';
-EXEC sp_CheckSeatAvailability @ScheduleID = 1, @CoachID = 1;
+EXEC sp_CheckSeatAvailability @ScheduleID = 1, @CoachID = 5;
 
 PRINT '=== 4. Book Tickets ==='
+EXEC sp_CreateBooking 1, 1, '3,4', 'Tôn, Anh';
+EXEC sp_CreateBooking 2, 1, '12,13', 'Thanh, Hưng';
+EXEC sp_CreateBooking 3, 1, '21,22,25', 'Long, VIệt, Bình';
 
+SELECT * FROM vw_CustomerBookings;
+EXEC sp_GetCustomerBookingHistory @UserID = 1;
+EXEC sp_GetBookingDetails 1;
 
+PRINT '=== 5. Pay ==='
+EXEC sp_ProcessPayment 1, 'VNPay_TXN_001', '00';
+SELECT * FROM vw_CustomerBookings;
+EXEC sp_CheckSeatAvailability @ScheduleID = 1, @CoachID = 1;
+EXEC sp_GetPaymentHistoryByUser 1;
+EXEC sp_GetTicketsByUser 1;
 
-PRINT '=== Admin Flow ==='
+PRINT '=== 6. Notifications ==='
+SELECT * FROM Notifications;
+EXEC sp_GetNotificationsByUser 1;
+
+PRINT '=== 7. Payment History ==='
+SELECT * FROM vw_PaymentHistory;
+
+PRINT '=== 8. Cancel Booking ==='
+EXEC sp_CancelBooking 1, 'busy';
+EXEC sp_CheckSeatAvailability @ScheduleID = 1, @CoachID = 1;
+SELECT * FROM Bookings;
+SELECT * FROM Tickets;
+SELECT * FROM RefundPolicies;

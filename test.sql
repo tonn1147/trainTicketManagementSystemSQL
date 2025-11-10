@@ -31,7 +31,7 @@ GO
 -- 1.2 Procedure: Admin Login
 CREATE OR ALTER PROCEDURE sp_AdminLogin
     @Email NVARCHAR(100),
-    @Password NVARCHAR(255)
+    @Password VARCHAR(255)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -42,14 +42,14 @@ BEGIN
         Email,
         UserType,
         'Login Success' AS Status
-    FROM Users
-    WHERE Email = @Email
-        AND PasswordHash = HASHBYTES('SHA2_256', @Password)
-        AND UserType IN ('Admin', 'Staff')
-        AND IsActive = 1;
+    FROM Users u
+    WHERE u.Email = @Email
+        AND u.PasswordHash = HASHBYTES('SHA2_256', @Password)
+        AND u.UserType IN ('Admin', 'Staff')
+        AND u.IsActive = 1;
     
     IF @@ROWCOUNT = 0
-        SELECT 0 AS UserID, 'Thông tin đăng nhập không hợp lệ/ Bạn không có quyền truy cập' AS Status;
+        SELECT 0 AS UserID, 'Invalid login/You do not have access' AS Status;
 END
 GO
 
@@ -132,7 +132,7 @@ BEGIN
 END
 GO
 
--- 2.3 Create user (Admin can create Staff accounts)
+-- 2.3 Create user 
 CREATE OR ALTER PROCEDURE sp_Admin_CreateUser
     @FullName NVARCHAR(100),
     @Email NVARCHAR(100),
@@ -147,10 +147,31 @@ BEGIN
         -- Check admin permission
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
+            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
             RETURN;
         END
         
+        -- Validate Email
+        IF EXISTS (
+            SELECT 1
+            FROM Users AS u
+            WHERE u.Email = @Email
+        )
+        BEGIN
+            SELECT 'Error' AS Status, N'Email đã tồn tại trong hệ thống' AS Message;
+            RETURN;
+        END
+        
+        -- Validate phone number
+        IF EXISTS (
+            SELECT 1
+            FROM Users AS u
+            WHERE u.PhoneNumber = @PhoneNumber
+        )
+        BEGIN
+            SELECT 'Error' AS Status, N'Số điện thoại đã tồn tại trong hệ thống' AS Message;
+            RETURN;
+        END
         INSERT INTO Users (FullName, Email, PhoneNumber, PasswordHash, UserType)
         VALUES (@FullName, @Email, @PhoneNumber, HASHBYTES('SHA2_256', @Password), @UserType);
         
@@ -177,7 +198,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
+            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
             RETURN;
         END
         
@@ -207,7 +228,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
+            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
             RETURN;
         END
         
@@ -218,7 +239,7 @@ BEGIN
             AND BookingStatus = 'Active'
         )
         BEGIN
-            SELECT 'Error' AS Status, 'Không thể xóa user đang đặt vé' AS Message;
+            SELECT 'Error' AS Status, 'Cannot delete user with active bookings' AS Message;
             RETURN;
         END
         
@@ -279,7 +300,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
+            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
             RETURN;
         END
         
@@ -289,7 +310,7 @@ BEGIN
             WHERE DepartureStationID = @StationID OR ArrivalStationID = @StationID
         )
         BEGIN
-            SELECT 'Error' AS Status, 'Không thể xóa các trạm tàu đang được sử dụng' AS Message;
+            SELECT 'Error' AS Status, 'Cannot delete station used in routes' AS Message;
             RETURN;
         END
         
@@ -350,7 +371,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
+            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
             RETURN;
         END
         
@@ -380,7 +401,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
+            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
             RETURN;
         END
         
@@ -410,7 +431,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
+            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
             RETURN;
         END
         
@@ -422,7 +443,7 @@ BEGIN
             AND DepartureTime > GETDATE()
         )
         BEGIN
-            SELECT 'Error' AS Status, 'Không thể xóa chuyến tàu có lịch trình sắp tới' AS Message;
+            SELECT 'Error' AS Status, 'Cannot delete train with upcoming schedules' AS Message;
             RETURN;
         END
         
@@ -487,13 +508,13 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
+            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
             RETURN;
         END
         
         IF @DepartureStationID = @ArrivalStationID
         BEGIN
-            SELECT 'Error' AS Status, 'Ga khởi hành và ga đến phải khác nhau' AS Message;
+            SELECT 'Error' AS Status, 'Departure and arrival stations must be different' AS Message;
             RETURN;
         END
         
@@ -522,7 +543,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
+            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
             RETURN;
         END
         
@@ -598,7 +619,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
+            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
             RETURN;
         END
         
@@ -677,7 +698,7 @@ BEGIN
     BEGIN TRY
         IF dbo.fn_IsAdmin(@AdminUserID) = 0
         BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
+            SELECT 'Error' AS Status, 'Insufficient permissions' AS Message;
             RETURN;
         END
         
@@ -958,75 +979,7 @@ BEGIN
 END
 GO
 
--- 8.7 Cancellation Analysis (FIXED)
-CREATE OR ALTER PROCEDURE sp_Admin_CancellationAnalysis
-    @StartDate DATE,
-    @EndDate DATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    -- Overall cancellation statistics
-    SELECT 
-        COUNT(CASE WHEN BookingStatus = 'Cancelled' THEN 1 END) AS TotalCancellations,
-        COUNT(CASE WHEN BookingStatus = 'Active' THEN 1 END) AS ActiveBookings,
-        CAST(COUNT(CASE WHEN BookingStatus = 'Cancelled' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) AS DECIMAL(5,2)) AS CancellationRate,
-        SUM(CASE WHEN BookingStatus = 'Cancelled' THEN TotalAmount ELSE 0 END) AS TotalCancelledAmount,
-        AVG(CASE WHEN BookingStatus = 'Cancelled' THEN TotalAmount END) AS AvgCancelledAmount
-    FROM Bookings
-    WHERE CAST(BookingDate AS DATE) BETWEEN @StartDate AND @EndDate;
-    
-    -- Cancellation by reason
-    SELECT 
-        COALESCE(CancellationReason, 'Not Specified') AS Reason,
-        COUNT(*) AS Count,
-        SUM(TotalAmount) AS TotalAmount
-    FROM Bookings
-    WHERE BookingStatus = 'Cancelled'
-        AND CAST(CancelledAt AS DATE) BETWEEN @StartDate AND @EndDate
-    GROUP BY CancellationReason
-    ORDER BY Count DESC;
-    
-    -- Cancellation timing (hours before departure)
-    WITH CancellationData AS (
-        SELECT 
-            b.BookingID,
-            b.TotalAmount,
-            DATEDIFF(HOUR, b.CancelledAt, s.DepartureTime) AS HoursBeforeDeparture
-        FROM Bookings b
-        JOIN Schedules s ON b.ScheduleID = s.ScheduleID
-        WHERE b.BookingStatus = 'Cancelled'
-            AND CAST(b.CancelledAt AS DATE) BETWEEN @StartDate AND @EndDate
-    ),
-    TimingCategories AS (
-        SELECT 
-            CASE 
-                WHEN HoursBeforeDeparture >= 72 THEN '72+ hours'
-                WHEN HoursBeforeDeparture >= 48 THEN '48-72 hours'
-                WHEN HoursBeforeDeparture >= 24 THEN '24-48 hours'
-                WHEN HoursBeforeDeparture >= 12 THEN '12-24 hours'
-                ELSE '0-12 hours'
-            END AS TimingCategory,
-            BookingID,
-            TotalAmount
-        FROM CancellationData
-    )
-    SELECT 
-        TimingCategory,
-        COUNT(*) AS CancellationCount,
-        SUM(TotalAmount) AS TotalAmount
-    FROM TimingCategories
-    GROUP BY TimingCategory
-    ORDER BY 
-        CASE TimingCategory
-            WHEN '72+ hours' THEN 1
-            WHEN '48-72 hours' THEN 2
-            WHEN '24-48 hours' THEN 3
-            WHEN '12-24 hours' THEN 4
-            ELSE 5
-        END;
-END
-GO
+
 
 -- 8.8 Payment Method Analytics
 CREATE OR ALTER PROCEDURE sp_Admin_PaymentAnalytics
@@ -1244,189 +1197,4 @@ BEGIN
 END
 GO
 
--- =============================================
--- 10. ADMIN UTILITIES
--- =============================================
 
--- 10.1 System Health Check (FIXED)
-CREATE OR ALTER PROCEDURE sp_Admin_SystemHealthCheck
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    PRINT '=== SYSTEM HEALTH CHECK ===';
-    
-    -- Database size
-    SELECT 'DATABASE SIZE' AS CheckType;
-    SELECT 
-        DB_NAME() AS DatabaseName,
-        SUM(size * 8 / 1024) AS SizeMB
-    FROM sys.master_files
-    WHERE database_id = DB_ID()
-    GROUP BY database_id;
-    
-    -- Table row counts
-    SELECT 'TABLE ROW COUNTS' AS CheckType;
-    SELECT 
-        t.name AS TableName,
-        SUM(p.rows) AS [RowCount]
-    FROM sys.tables t
-    JOIN sys.partitions p ON t.object_id = p.object_id
-    WHERE p.index_id IN (0, 1)
-    GROUP BY t.name
-    ORDER BY [RowCount] DESC;
-    
-    -- Orphaned records check
-    SELECT 'DATA INTEGRITY' AS CheckType;
-    
-    SELECT 'Tickets without valid bookings' AS Issue, COUNT(*) AS [Count]
-    FROM Tickets tk
-    LEFT JOIN Bookings b ON tk.BookingID = b.BookingID
-    WHERE b.BookingID IS NULL
-    
-    UNION ALL
-    
-    SELECT 'Bookings without tickets' AS Issue, COUNT(*) AS [Count]
-    FROM Bookings b
-    LEFT JOIN Tickets tk ON b.BookingID = tk.BookingID
-    WHERE tk.TicketID IS NULL AND b.BookingStatus = 'Active'
-    
-    UNION ALL
-    
-    SELECT 'Schedules in past still marked as Scheduled' AS Issue, COUNT(*) AS [Count]
-    FROM Schedules
-    WHERE Status = 'Scheduled' AND DepartureTime < GETDATE();
-    
-    -- Performance metrics
-    SELECT 'RECENT PERFORMANCE' AS CheckType;
-    SELECT 
-        CAST(GETDATE() AS DATE) AS [Date],
-        COUNT(DISTINCT CASE WHEN CAST(b.BookingDate AS DATE) = CAST(GETDATE() AS DATE) THEN b.BookingID END) AS TodayBookings,
-        COUNT(DISTINCT CASE WHEN CAST(b.BookingDate AS DATE) = CAST(GETDATE()-1 AS DATE) THEN b.BookingID END) AS YesterdayBookings,
-        (SELECT COUNT(DISTINCT s.ScheduleID) 
-         FROM Schedules s 
-         WHERE s.Status = 'Scheduled' AND s.DepartureTime > GETDATE()) AS UpcomingSchedules
-    FROM Bookings b;
-END
-GO
-
--- 10.2 Clean up old data
-CREATE OR ALTER PROCEDURE sp_Admin_CleanupOldData
-    @DaysToKeep INT = 365,
-    @AdminUserID INT,
-    @DryRun BIT = 1
-AS
-BEGIN
-    SET NOCOUNT ON;
-    BEGIN TRY
-        IF dbo.fn_IsAdmin(@AdminUserID) = 0
-        BEGIN
-            SELECT 'Error' AS Status, 'Bạn không có quyền truy cập' AS Message;
-            RETURN;
-        END
-        
-        DECLARE @CutoffDate DATE = DATEADD(DAY, -@DaysToKeep, GETDATE());
-        
-        IF @DryRun = 1
-        BEGIN
-            PRINT '=== DRY RUN MODE - KHÔNG XÓA DỮ LIỆU ===';
-            
-            SELECT 'Notifications to delete' AS Item, COUNT(*) AS Count
-            FROM Notifications
-            WHERE SentAt < @CutoffDate AND IsRead = 1
-            
-            UNION ALL
-            
-            SELECT 'Completed bookings to archive' AS Item, COUNT(*) AS Count
-            FROM Bookings b
-            JOIN Schedules s ON b.ScheduleID = s.ScheduleID
-            WHERE s.Status = 'Completed' AND s.ArrivalTime < @CutoffDate;
-        END
-        ELSE
-        BEGIN
-            BEGIN TRANSACTION;
-            
-            -- Delete old read notifications
-            DELETE FROM Notifications
-            WHERE SentAt < @CutoffDate AND IsRead = 1;
-            
-            DECLARE @DeletedNotifications INT = @@ROWCOUNT;
-            
-            COMMIT TRANSACTION;
-            
-            SELECT 'Success' AS Status, 
-                   @DeletedNotifications AS NotificationsDeleted;
-        END
-    END TRY
-    BEGIN CATCH
-        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-        SELECT 'Error' AS Status, ERROR_MESSAGE() AS Message;
-    END CATCH
-END
-GO
-
--- =============================================
--- 11. ADMIN FLOW DEMONSTRATION
--- =============================================
-
-PRINT '=================================================';
-PRINT 'ADMIN FLOW DEMONSTRATION';
-PRINT '=================================================';
-
--- Assume Admin UserID = 4 (from original data)
-DECLARE @AdminID INT = 4;
-
-PRINT '';
-PRINT '=== 1. ADMIN LOGIN ===';
-EXEC sp_AdminLogin @Email = 'phamthidung@email.com', @Password = 'hash_password_abc';
-
-PRINT '';
-PRINT '=== 2. DASHBOARD OVERVIEW (Last 30 days) ===';
-EXEC sp_Admin_DashboardOverview @DateRange = 30;
-
-PRINT '';
-PRINT '=== 3. VIEW ALL USERS ===';
-EXEC sp_Admin_GetAllUsers @UserType = 'Customer', @IsActive = 1;
-
-PRINT '';
-PRINT '=== 4. VIEW ALL STATIONS ===';
-EXEC sp_Admin_GetAllStations @IsActive = 1;
-
-PRINT '';
-PRINT '=== 5. VIEW ALL TRAINS ===';
-EXEC sp_Admin_GetAllTrains @IsActive = 1;
-
-PRINT '';
-PRINT '=== 6. VIEW ALL ROUTES ===';
-EXEC sp_Admin_GetAllRoutes @IsActive = 1;
-
-PRINT '';
-PRINT '=== 7. VIEW ALL SCHEDULES ===';
-EXEC sp_Admin_GetAllSchedules @Status = 'Scheduled';
-
-PRINT '';
-PRINT '=== 8. VIEW ALL BOOKINGS ===';
-EXEC sp_Admin_GetAllBookings @BookingStatus = 'Active';
-
-PRINT '';
-PRINT '=== 9. REVENUE ANALYTICS (Daily) ===';
-EXEC sp_Admin_RevenueAnalytics 
-    @StartDate = '2025-10-01', 
-    @EndDate = '2025-11-05', 
-    @GroupBy = 'Day';
-
-PRINT '';
-PRINT '=== 10. SEAT CLASS ANALYTICS ===';
-EXEC sp_Admin_SeatClassAnalytics 
-    @StartDate = '2025-10-01', 
-    @EndDate = '2025-11-05';
-
-PRINT '';
-PRINT '=== 11. CUSTOMER SEGMENTATION ===';
-EXEC sp_Admin_CustomerSegmentation;
-
-PRINT '';
-PRINT '=== 12. SYSTEM HEALTH CHECK ===';
-EXEC sp_Admin_SystemHealthCheck;
-
-GO
